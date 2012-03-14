@@ -62,4 +62,14 @@ describe Ircbgb::MessageParser do
     msg.command.must_equal 'PEZZ'
     msg.params.must_equal ['fright,:clap', 'beddy', 'pram', 'this : has : colons!']
   end
+
+  it "does not parse malformed messages" do
+    lambda {
+      parse_it 'invalid'
+    }.must_raise ::Ircbgb::MessageFormatError
+
+    lambda {
+      parse_it 'nick!user@hostname.com       '
+    }.must_raise ::Ircbgb::MessageFormatError
+  end
 end
