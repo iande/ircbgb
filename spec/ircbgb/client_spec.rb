@@ -80,5 +80,92 @@ describe Ircbgb::Client do
   end
 
   describe "io" do
+    before do
+      @socket = socket = UnblockedTcpSocket.new
+      stub(::IoUnblock::TcpSocket, :new) { |*a|
+        socket.init_with(*a)
+      }
+      client.start
+    end
+
+    after do
+      client.stop
+    end
+
+    describe "connecting" do
+      it "is connected once it's sent the user nick and pong" do
+        client.connected?.must_equal false
+        @socket.trigger_start
+        @socket.server_write 'PING :give tHi:S baCK!'
+        client.connected?.must_equal true
+        @socket.written.must_equal [
+          'USER botty 0 * :I am a bot',
+          'NICK bot1',
+          'PONG :give tHi:S baCK!'
+        ]
+      end
+
+      it "chooses alternate nicknames" do
+        @socket.trigger_start
+        @socket.server_write '433 * bot1 :Nickname is already in use.'
+        client.connected?.must_equal false
+        @socket.server_write '433 * bot2 :Nickname is already in use.'
+        client.connected?.must_equal false
+        @socket.server_write 'PING :0123456'
+        client.connected?.must_equal true
+        @socket.written.must_equal [
+          'USER botty 0 * :I am a bot',
+          'NICK bot1',
+          'NICK bot2',
+          'NICK bot3',
+          'PONG :0123456'
+        ]
+      end
+
+      it "shuts down if all nicknames are taken" do
+        @socket.trigger_start
+        @socket.server_write '433 * bot1 :Nickname is already in use.'
+        @socket.server_write '433 * bot2 :Nickname is already in use.'
+        @socket.server_write '433 * bot3 :Nickname is already in use.'
+        client.connected?.must_equal false
+        @socket.written.must_equal [
+          'USER botty 0 * :I am a bot',
+          'NICK bot1',
+          'NICK bot2',
+          'NICK bot3',
+          'QUIT'
+        ]
+      end
+    end
+
+    describe "events" do
+      it "binds and triggers an event based upon the command" do
+        params = nil
+        msg = nil
+        client.on_403 do |ps, m|
+          params = ps
+          msg = m
+        end
+        @socket.server_write '403 these are :my various arguments'
+        params.must_equal ['these', 'are', 'my various arguments']
+        msg.command.must_equal '403'
+        msg.source.nick.must_equal 'server1.example.org'
+      end
+
+      it "triggers an event split across multiple reads" do
+        params = nil
+        msg = nil
+        client.on_ping do |ps, m|
+          params = ps
+          msg = m
+        end
+
+        @socket.server_write_raw ':server1.example.org PI'
+        @socket.server_write_raw 'NG :echo this bac'
+        @socket.server_write_raw "k to me\r\n"
+        params.must_equal ['echo this back to me']
+        msg.command.must_equal 'PING'
+      end
+    end
   end
 end
