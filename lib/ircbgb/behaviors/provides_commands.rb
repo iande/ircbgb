@@ -16,5 +16,10 @@ module Ircbgb::Behaviors
       msg = ":#{msg}" if msg
       write_command 'QUIT', msg
     end
+
+    def do_privmsg targs, text
+      targs = targs.join(',') if Array === targs
+      write_command "PRIVMSG" "#{targs} :#{text}"
+    end
   end
 end

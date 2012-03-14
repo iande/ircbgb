@@ -5,7 +5,7 @@ module Ircbgb::Behaviors
     # want to modify instance variables in them?
 
   private
-    def register_connection_negotiation
+    def initialize_negotiates_connection
       on_ping do |(pong, _)|
         do_pong pong
         @c_state = :connected if connecting?

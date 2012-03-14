@@ -1,14 +1,13 @@
 module Ircbgb
   module Behaviors
     def self.included klass
-      puts "Including #{self} in #{klass}"
       # Include behavior modules
       klass.__send__ :include, ProvidesCommands
       klass.__send__ :include, NegotiatesConnection
     end
 
     def initialize_behaviors
-      register_connection_negotiation
+      initialize_negotiates_connection
     end
   end
 end
