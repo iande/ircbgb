@@ -71,5 +71,13 @@ describe Ircbgb::MessageParser do
     lambda {
       parse_it 'nick!user@hostname.com       '
     }.must_raise ::Ircbgb::MessageFormatError
+
+    lambda {
+      parse_it ''
+    }.must_raise ::Ircbgb::MessageFormatError
+
+    lambda {
+      parse_it '       '
+    }.must_raise ::Ircbgb::MessageFormatError
   end
 end
