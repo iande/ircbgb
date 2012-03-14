@@ -7,6 +7,21 @@ Rake::TestTask.new do |t|
   t.verbose = true
 end
 
+namespace :ragel do
+  desc "Delete previously built files"
+  task :clean do
+    sh "rm lib/ircbgb/message_parser.rb"
+  end
+
+  desc "Generate parsers from Ragel definitions"
+  task :parser do
+    sh "ragel -R lib/ircbgb/message_parser.rl"
+  end
+end
+
+desc "Ragel it!"
+task :ragel => ['ragel:clean', 'ragel:parser']
+
 desc "Generate a coverage report from tests with simplecov"
 task :coverage do  
   ENV['SCOV'] = '1'

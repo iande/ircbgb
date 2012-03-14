@@ -63,6 +63,23 @@ describe Ircbgb::MessageParser do
     msg.params.must_equal ['fright,:clap', 'beddy', 'pram', 'this : has : colons!']
   end
 
+  it "parses ipv4 user hosts" do
+    msg = parse_it 'me!~notyou@123.45.67.89 mklame'
+    msg.source.host.must_equal '123.45.67.89'
+  end
+
+  it "parses ipv6 user hosts" do
+    msg = parse_it 'me!~notyou@00f:a221:03:e:1234:420b:f6:9a mklame'
+    msg.source.host.must_equal '00f:a221:03:e:1234:420b:f6:9a'
+  end
+
+  it "parses ipv4 over ipv6 hosts" do
+    msg = parse_it 'me!~notyou@0:0:0:0:0:0:1.2.3.4 mklame'
+    msg.source.host.must_equal '0:0:0:0:0:0:1.2.3.4'
+    msg = parse_it 'me!~notyou@0:0:0:0:0:FffF:1.2.3.4 mklame'
+    msg.source.host.must_equal '0:0:0:0:0:FffF:1.2.3.4'
+  end
+
   it "does not parse malformed messages" do
     lambda {
       parse_it 'invalid'
