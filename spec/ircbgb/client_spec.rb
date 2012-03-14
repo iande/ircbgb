@@ -1,5 +1,4 @@
 require File.expand_path('../../spec_helper', __FILE__)
-require 'stringio'
 
 describe Ircbgb::Client do
   def client
@@ -30,30 +29,6 @@ describe Ircbgb::Client do
 
     it "sets up a username" do
       client.username.must_equal 'botty'
-    end
-  end
-
-  describe "connecting" do
-    before do
-      @socket = socket = DummyIO.new
-      @socket.readable = true
-      @socket.writeable = true
-      meta_socket = class << TCPSocket; self; end
-      meta_socket.send(:alias_method, :mangled_new, :new)
-      meta_socket.send(:define_method, :new) { |*_| socket }
-    end
-
-    after do
-      meta_socket = class << TCPSocket; self; end
-      meta_socket.send(:remove_method, :new)
-      meta_socket.send(:alias_method, :new, :mangled_new)
-    end
-
-    it "connects" do
-      client.start
-      Thread.pass until client.connected?
-      client.stop
-      @socket.w_stream.string.must_equal "USER botty x y :I am a bot\r\nNICK bot1\r\n"
     end
   end
 end
