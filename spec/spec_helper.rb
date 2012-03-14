@@ -11,9 +11,8 @@ begin
 rescue LoadError
 end
 
-require 'ircbgb'
-
 Dir[File.expand_path('../support/*.rb', __FILE__)].each do |r|
   require r
 end
 
+require 'ircbgb'

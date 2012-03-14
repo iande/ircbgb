@@ -31,9 +31,15 @@ module Ircbgb
     end
 
     def start
+      uri = uris.first
+      @stream = IoUnblock::TcpSocket.new(uri.host, uri.port, {
+      })
+      @stream.start
+      Thread.pass until @stream.running?
     end
 
     def stop
+      @stream && @stream.stop
     end
   end
 end
