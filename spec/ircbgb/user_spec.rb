@@ -64,8 +64,8 @@ describe Ircbgb::User do
     end
 
     it "matches against matchers" do
-      Ircbgb::Matcher.new('*o*!*stuffy@*i*.?o.u?').must_match match_me
-      Ircbgb::Matcher.new('someNick?!*@*').wont_match match_me
+      Ircbgb::WildcardMatcher.new('*o*!*stuffy@*i*.?o.u?').must_match match_me
+      Ircbgb::WildcardMatcher.new('someNick?!*@*').wont_match match_me
     end
   end
 end

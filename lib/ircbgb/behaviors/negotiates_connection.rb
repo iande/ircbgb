@@ -6,12 +6,12 @@ module Ircbgb::Behaviors
 
   private
     def initialize_negotiates_connection
-      on_ping do |(pong, _)|
+      received 'ping' do |me, (pong, _)|
         do_pong pong
         @c_state = :connected if connecting?
       end
 
-      on_433 do |pars|
+      received 433 do
         if connecting?
           next_nick = next_nickname
           if next_nick

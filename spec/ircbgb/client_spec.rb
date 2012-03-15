@@ -139,10 +139,10 @@ describe Ircbgb::Client do
     end
 
     describe "events" do
-      it "binds and triggers an event based upon the command" do
+      it "binds and triggers an event based upon a received command" do
         params = nil
         msg = nil
-        client.on_403 do |ps, m|
+        client.received 403 do |me, ps, m|
           params = ps
           msg = m
         end
@@ -155,7 +155,7 @@ describe Ircbgb::Client do
       it "triggers an event split across multiple reads" do
         params = nil
         msg = nil
-        client.on_ping do |ps, m|
+        client.received 'ping' do |me, ps, m|
           params = ps
           msg = m
         end
@@ -165,6 +165,44 @@ describe Ircbgb::Client do
         @socket.server_write_raw "k to me\r\n"
         params.must_equal ['echo this back to me']
         msg.command.must_equal 'PING'
+      end
+
+      it "binds and triggers events based on a command to send" do
+        params = nil
+        msg = nil
+        client.sending 'nick' do |me, ps, m|
+          params = ps
+          msg = m
+        end
+        client.do_nick 'ph3ar-'
+        params.must_equal [ 'ph3ar-' ]
+        msg.command.must_equal 'NICK'
+      end
+
+      it "binds and triggers an receiving/received in the right order" do
+        response_order = []
+        client.received :privmsg do
+          response_order << :on
+        end
+        client.receiving :privmsg do
+          response_order << :before
+        end
+        @socket.server_write 'PRIVMSG #blax0 :hello cruel world!'
+        response_order.must_equal [:before, :on]
+      end
+
+      it "binds and triggers events based on a command that was sent" do
+        params = nil
+        msg = nil
+        client.sent 'nick' do |me, ps, m|
+          params = ps
+          msg = m
+        end
+        client.do_nick 'ph3ar-'
+        params.must_equal nil
+        @socket.trigger_full_write_callbacks
+        params.must_equal [ 'ph3ar-' ]
+        msg.command.must_equal 'NICK'
       end
     end
   end

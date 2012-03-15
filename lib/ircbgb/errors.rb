@@ -1,5 +1,5 @@
 module Ircbgb
-  class Error < ::StandardError; end
+  class IrcbgbError < ::StandardError; end
 
-  class MessageFormatError < ::Ircbgb::Error; end
+  class MessageFormatError < IrcbgbError; end
 end

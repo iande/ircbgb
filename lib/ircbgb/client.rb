@@ -13,10 +13,18 @@ module Ircbgb
       @realname = ''
       @username = ''
       @c_state = :connecting
-      @callbacks = {}
+      @callbacks = {
+        :sent => {},
+        :sending => {},
+        :received => {},
+        :receiving => {}
+      }
       @read_buffer = ''
       yield self if block_given?
       initialize_behaviors
+      @message_written = proc do |l, b, msg|
+        trigger_sent msg
+      end
     end
 
     def connecting?
@@ -46,8 +54,8 @@ module Ircbgb
     def start
       uri = uris.first
       @stream = IoUnblock::TcpSocket.new(uri.host, uri.port, {
-        started: lambda { |st| negotiate_connection },
-        read: lambda { |str| parse_message str }
+        :started => lambda { |st| negotiate_connection },
+        :read => lambda { |str| parse_message str }
       })
       @stream.start
       Thread.pass until @stream.running?
@@ -60,26 +68,62 @@ module Ircbgb
       self
     end
 
-    def bind ev, block, opts=nil
-      @callbacks[ev] ||= []
-      @callbacks[ev] << block
+    def sending cmd, &block
+      bind :sending, cmd, block
+    end
+
+    def sent cmd, &block
+      bind :sent, cmd, block
+    end
+
+    def receiving cmd, &block
+      bind :receiving, cmd, block
+    end
+
+    def received cmd, &block
+      bind :received, cmd, block
+    end
+
+  private
+    def bind at, cmd, cb
+      ev = cmd.to_s.downcase
+      @callbacks[at][ev] ||= []
+      @callbacks[at][ev] << cb
       self
     end
 
-    def trigger ev, msg
-      cbs = @callbacks[ev.downcase]
-      if cbs
+    def trigger at, msg
+      ev = msg.command.downcase
+      if cbs = @callbacks[at][ev]
         cbs.each do |cb|
-          cb.call(msg.params, msg)
+          cb.call self, msg.params, msg
         end
       end
       self
     end
 
-  private
+    def trigger_sending msg
+      trigger :sending, msg
+    end
+
+    def trigger_sent msg
+      trigger :sent, msg
+    end
+
+    def trigger_receiving msg
+      trigger :receiving, msg
+    end
+
+    def trigger_received msg
+      trigger :received, msg
+    end
+
     def write_command cmd, args=nil
       rest = args.nil? ? '' : " #{args}"
-      @stream.write "#{cmd.upcase}#{rest}#{CRLF}"
+      msg_str = "#{cmd.upcase}#{rest}#{CRLF}"
+      msg = MessageParser.parse(msg_str)
+      @stream.write(msg_str, msg, &@message_written)
+      trigger_sending msg 
     end
 
     def parse_message str
@@ -88,15 +132,8 @@ module Ircbgb
         msg_str = @read_buffer[0..(pos+1)]
         @read_buffer = @read_buffer[(pos+2)..-1]
         msg = MessageParser.parse(msg_str)
-        trigger msg.command, msg
-      end
-    end
-
-    def method_missing meth, *args, &block
-      if meth[0..2] == 'on_'
-        bind meth[3..-1].downcase, block, args
-      else
-        super
+        trigger_receiving msg
+        trigger_received msg
       end
     end
   end

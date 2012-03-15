@@ -9,6 +9,7 @@ class UnblockedTcpSocket
 
   def init_with host, port, callbacks=nil
     @callbacks = callbacks || {}
+    @writebacks = []
     @host = host
     @port = port
     @callbacks[:callback_failed] ||= lambda { |ex|
@@ -29,10 +30,11 @@ class UnblockedTcpSocket
     server_write_raw ":#{@host} #{cmd}\r\n"
   end
 
-  def write str
+  def write str, *cb_args, &cb
     if str[-2..-1] != "\r\n"
       raise "You forgot to CRLF your message"
     end
+    @writebacks << [cb, str, cb_args] if cb
     @written << str[0..-3]
   end
 
@@ -46,6 +48,12 @@ class UnblockedTcpSocket
 
   def trigger_stop
     trigger_ev :stopped, :stop
+  end
+
+  def trigger_full_write_callbacks
+    @writebacks.each do |cb, str, cb_args|
+      cb.call str, str.size, *cb_args
+    end
   end
 
   def trigger_ev ev, *args

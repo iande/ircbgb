@@ -1,7 +1,7 @@
 require File.expand_path('../../spec_helper', __FILE__)
 
-describe Ircbgb::Matcher do
-  def matcher str; Ircbgb::Matcher.new str; end
+describe Ircbgb::WildcardMatcher do
+  def matcher str; Ircbgb::WildcardMatcher.new str; end
 
   it "treats ? as any single character (/./)" do
     match = matcher('?lAm?')
@@ -21,5 +21,14 @@ describe Ircbgb::Matcher do
     'abcdefghijklmnopqrstuvwxyz1234567890[]{}()!@#$%^&*lAM'.must_match match
     'abcdefghijklmnopqrsLAMtuvwxyz1234567890[]{}()!@#$%^&*'.must_match match
     'flMa'.wont_match match
+  end
+
+  it "performs a case-insensitive match when there are no wildcards" do
+    match = matcher('wHAm')
+    'wham'.must_match match
+    'WHAM'.must_match match
+    'Wham'.must_match match
+    'wHAmy'.wont_match match
+    'efwHAm'.wont_match match
   end
 end

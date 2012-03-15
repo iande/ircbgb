@@ -12,7 +12,7 @@ module Ircbgb
     def to_s; @mask.dup; end
 
     def =~ other
-      return Matcher.new(other) =~ @mask if String === other
+      return WildcardMatcher.new(other) =~ @mask if String === other
       @mask =~ other
     end
 
