@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   #Eventually, for now use the local build
-  #s.add_dependency 'io_unblock'
+  s.add_dependency 'io_unblock'
 
   s.add_development_dependency 'rake'
 end

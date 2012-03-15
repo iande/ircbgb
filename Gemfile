@@ -15,6 +15,3 @@ group :test do
   gem 'minitest'
 end
 
-group :development do
-  gem 'io_unblock', :path => '/Users/chaos/code/ruby/io_unblock/'
-end
