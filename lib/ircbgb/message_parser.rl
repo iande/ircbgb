@@ -52,7 +52,7 @@
   trailing = ((nospcrlfcl | ' ' | ':')*) >clear_rest @append_rest;
   params = ((sspace+ middle){0,14} (sspace+ ':' trailing)?);
 
-  message = (':' prefix sspace+)? command params? crlf;
+  message = (':' prefix sspace+)? command params? sspace* crlf;
 
   main := message >start_parser $err(message_error);
 }%%
