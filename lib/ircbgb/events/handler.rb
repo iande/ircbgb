@@ -1,23 +1,5 @@
-module Ircbgb
-  class EventCallback
-    def initialize cb, opts
-      @callback = cb
-      @times = opts.fetch(:times) { false }
-    end
-
-    def call msg, client
-      unless exhausted?
-        @times -= 1 if @times
-        @callback.call msg, client
-      end
-    end
-
-    def exhausted?
-      @times && @times <= 0
-    end
-  end
-
-  class EventHandler
+module Ircbgb::Events
+  class Handler
     attr_reader :running
     alias :running? :running
 
@@ -67,12 +49,12 @@ module Ircbgb
       @c_lock.synchronize do
         if commands.empty?
           @callbacks[group][:all] ||= []
-          @callbacks[group][:all] << EventCallback.new(cb, opts)
+          @callbacks[group][:all] << Callback.new(cb, opts)
         else
           commands.each do |cmd|
             cmd = cmd.to_s.upcase
             @callbacks[group][cmd] ||= []
-            @callbacks[group][cmd] << EventCallback.new(cb, opts)
+            @callbacks[group][cmd] << Callback.new(cb, opts)
           end
         end
       end

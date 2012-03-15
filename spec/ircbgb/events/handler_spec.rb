@@ -1,9 +1,9 @@
-require File.expand_path('../../spec_helper', __FILE__)
+require File.expand_path('../../../spec_helper', __FILE__)
 
-describe Ircbgb::EventHandler do
+describe Ircbgb::Events::Handler do
   let(:client) { :client }
   let(:source) { :source }
-  let(:events) { Ircbgb::EventHandler.new(client) }
+  let(:events) { Ircbgb::Events::Handler.new(client) }
 
   before do
     @th_abort = ::Thread.abort_on_exception
