@@ -1,10 +1,13 @@
 module Ircbgb
   class Client
+    extend Forwardable
     include Behaviors
     CRLF = "\r\n".freeze
 
     attr_reader :nicks, :servers
     attr_accessor :realname, :username
+    def_delegators :@events, :sending, :sent, :receiving, :received,
+      :sending_once, :sent_once, :receiving_once, :received_once
 
     # Can be initialized with a block
     def initialize
@@ -13,17 +16,13 @@ module Ircbgb
       @realname = ''
       @username = ''
       @c_state = :connecting
-      @callbacks = {
-        :sent => {},
-        :sending => {},
-        :received => {},
-        :receiving => {}
-      }
       @read_buffer = ''
+      @events = Events::Handler.new self
+      @events.start
       yield self if block_given?
       initialize_behaviors
       @message_written = proc do |l, b, msg|
-        trigger_sent msg
+        @events.trigger_sent msg
       end
     end
 
@@ -63,67 +62,18 @@ module Ircbgb
     end
 
     def stop
+      @events.stop
       @stream && @stream.stop
-      @stream = nil
       self
-    end
-
-    def sending cmd, &block
-      bind :sending, cmd, block
-    end
-
-    def sent cmd, &block
-      bind :sent, cmd, block
-    end
-
-    def receiving cmd, &block
-      bind :receiving, cmd, block
-    end
-
-    def received cmd, &block
-      bind :received, cmd, block
     end
 
   private
-    def bind at, cmd, cb
-      ev = cmd.to_s.downcase
-      @callbacks[at][ev] ||= []
-      @callbacks[at][ev] << cb
-      self
-    end
-
-    def trigger at, msg
-      ev = msg.command.downcase
-      if cbs = @callbacks[at][ev]
-        cbs.each do |cb|
-          cb.call self, msg.params, msg
-        end
-      end
-      self
-    end
-
-    def trigger_sending msg
-      trigger :sending, msg
-    end
-
-    def trigger_sent msg
-      trigger :sent, msg
-    end
-
-    def trigger_receiving msg
-      trigger :receiving, msg
-    end
-
-    def trigger_received msg
-      trigger :received, msg
-    end
-
     def write_command cmd, args=nil
       rest = args.nil? ? '' : " #{args}"
       msg_str = "#{cmd.upcase}#{rest}#{CRLF}"
       msg = MessageParser.parse(msg_str)
       @stream.write(msg_str, msg, &@message_written)
-      trigger_sending msg 
+      @events.trigger_sending msg 
     end
 
     def parse_message str
@@ -132,8 +82,8 @@ module Ircbgb
         msg_str = @read_buffer[0..(pos+1)]
         @read_buffer = @read_buffer[(pos+2)..-1]
         msg = MessageParser.parse(msg_str)
-        trigger_receiving msg
-        trigger_received msg
+        @events.trigger_receiving msg
+        @events.trigger_received msg
       end
     end
   end

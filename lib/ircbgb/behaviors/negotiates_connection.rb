@@ -6,8 +6,8 @@ module Ircbgb::Behaviors
 
   private
     def initialize_negotiates_connection
-      received 'ping' do |me, (pong, _)|
-        do_pong pong
+      received 'ping' do |msg|
+        do_pong msg.params.first
         @c_state = :connected if connecting?
       end
 

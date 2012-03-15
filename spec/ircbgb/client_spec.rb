@@ -94,10 +94,14 @@ describe Ircbgb::Client do
 
     describe "connecting" do
       it "is connected once it's sent the user nick and pong" do
+        ponged = false
+        client.sending('pong') { ponged = true }
         client.connected?.must_equal false
         @socket.trigger_start
         @socket.server_write 'PING :give tHi:S baCK!'
+        Thread.pass until ponged
         client.connected?.must_equal true
+        client.stop
         @socket.written.must_equal [
           'USER botty 0 * :I am a bot',
           'NICK bot1',
@@ -106,13 +110,16 @@ describe Ircbgb::Client do
       end
 
       it "chooses alternate nicknames" do
+        ponged = false
+        client.sending('pong') { ponged = true }
         @socket.trigger_start
         @socket.server_write '433 * bot1 :Nickname is already in use.'
-        client.connected?.must_equal false
         @socket.server_write '433 * bot2 :Nickname is already in use.'
-        client.connected?.must_equal false
         @socket.server_write 'PING :0123456'
+        client.connected?.must_equal false
+        Thread.pass until ponged
         client.connected?.must_equal true
+        client.stop
         @socket.written.must_equal [
           'USER botty 0 * :I am a bot',
           'NICK bot1',
@@ -127,6 +134,7 @@ describe Ircbgb::Client do
         @socket.server_write '433 * bot1 :Nickname is already in use.'
         @socket.server_write '433 * bot2 :Nickname is already in use.'
         @socket.server_write '433 * bot3 :Nickname is already in use.'
+        client.stop
         client.connected?.must_equal false
         @socket.written.must_equal [
           'USER botty 0 * :I am a bot',
@@ -140,42 +148,39 @@ describe Ircbgb::Client do
 
     describe "events" do
       it "binds and triggers an event based upon a received command" do
-        params = nil
         msg = nil
-        client.received 403 do |me, ps, m|
-          params = ps
+        client.received 403 do |m, c|
           msg = m
         end
         @socket.server_write '403 these are :my various arguments'
-        params.must_equal ['these', 'are', 'my various arguments']
+        client.stop
+        msg.params.must_equal ['these', 'are', 'my various arguments']
         msg.command.must_equal '403'
         msg.source.nick.must_equal 'server1.example.org'
       end
 
       it "triggers an event split across multiple reads" do
-        params = nil
         msg = nil
-        client.received 'ping' do |me, ps, m|
-          params = ps
+        client.received 'ping' do |m, c|
           msg = m
         end
 
         @socket.server_write_raw ':server1.example.org PI'
         @socket.server_write_raw 'NG :echo this bac'
         @socket.server_write_raw "k to me\r\n"
-        params.must_equal ['echo this back to me']
+        client.stop
+        msg.params.must_equal ['echo this back to me']
         msg.command.must_equal 'PING'
       end
 
       it "binds and triggers events based on a command to send" do
-        params = nil
         msg = nil
-        client.sending 'nick' do |me, ps, m|
-          params = ps
+        client.sending 'nick' do |m, c|
           msg = m
         end
         client.do_nick 'ph3ar-'
-        params.must_equal [ 'ph3ar-' ]
+        client.stop
+        msg.params.must_equal [ 'ph3ar-' ]
         msg.command.must_equal 'NICK'
       end
 
@@ -188,20 +193,20 @@ describe Ircbgb::Client do
           response_order << :before
         end
         @socket.server_write 'PRIVMSG #blax0 :hello cruel world!'
+        client.stop
         response_order.must_equal [:before, :on]
       end
 
       it "binds and triggers events based on a command that was sent" do
-        params = nil
         msg = nil
-        client.sent 'nick' do |me, ps, m|
-          params = ps
+        client.sent 'nick' do |m, c|
           msg = m
         end
         client.do_nick 'ph3ar-'
-        params.must_equal nil
+        msg.must_equal nil
         @socket.trigger_full_write_callbacks
-        params.must_equal [ 'ph3ar-' ]
+        client.stop
+        msg.params.must_equal [ 'ph3ar-' ]
         msg.command.must_equal 'NICK'
       end
     end
