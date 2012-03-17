@@ -8,9 +8,8 @@ require 'ircbgb/behaviors'
 require 'ircbgb/events'
 require 'ircbgb/client'
 require 'ircbgb/message_parser'
-require 'ircbgb/message'
-require 'ircbgb/server'
-require 'ircbgb/user'
+require 'ircbgb/messages'
+require 'ircbgb/sources'
 
 module Ircbgb
 end

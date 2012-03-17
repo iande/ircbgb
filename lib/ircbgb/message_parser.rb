@@ -560,7 +560,7 @@ end
 
       params << rest unless rest.empty?
 
-      ::Ircbgb::Message.new source, cmd, params
+      ::Ircbgb::Messages.generate cmd, params, source
     end
   end
 end

@@ -15,7 +15,7 @@ describe Ircbgb::Events::Handler do
   end
 
   def irc_msg cmd='CMD', params=[1, :a, 32]
-    Ircbgb::Message.new(source, cmd, params)
+    Ircbgb::Message.new(cmd, params, source)
   end
 
   describe "threading" do

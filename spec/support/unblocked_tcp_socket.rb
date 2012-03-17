@@ -14,6 +14,7 @@ class UnblockedTcpSocket
     @port = port
     @callbacks[:callback_failed] ||= lambda { |ex|
       warn "Default callback_failed handler: #{ex}"
+      ex.backtrace.each { |b| warn "\t=> #{b}" }
     }
     self
   end

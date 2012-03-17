@@ -27,11 +27,15 @@ module Ircbgb
     end
 
     def connecting?
-      @c_state = :connecting
+      @c_state == :connecting
     end
 
     def connected?
       @c_state == :connected
+    end
+
+    def running?
+      connecting? || connected?
     end
 
     def nicks= nicks
@@ -51,10 +55,13 @@ module Ircbgb
     end
 
     def start
+      @c_state = :connecting
       uri = uris.first
       @stream = IoUnblock::TcpSocket.new(uri.host, uri.port, {
         :started => lambda { |st| negotiate_connection },
-        :read => lambda { |str| parse_message str }
+        :read => lambda { |str| parse_message str },
+        :stopped => lambda { |st| stop },
+        :failed => lambda { |ex| stop }
       })
       @stream.start
       Thread.pass until @stream.running?
@@ -64,6 +71,7 @@ module Ircbgb
     def stop
       @events.stop
       @stream && @stream.stop
+      @c_state = :stopped
       self
     end
 
