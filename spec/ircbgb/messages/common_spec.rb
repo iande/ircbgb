@@ -26,8 +26,8 @@ describe "common message types" do
     msg.class.must_equal Ircbgb::Messages::CtcpRequest
     msg.target.must_equal '#a,b,&c'
     msg.targets.must_equal ['#a', 'b', '&c']
-    msg.text.must_equal 'PING 12345 6789'
-    msg.request.must_equal 'PING'
+    msg.request.must_equal 'PING 12345 6789'
+    msg.ctcp_command.must_equal 'PING'
   end
 
   it "creates ctcp response objects" do
@@ -35,8 +35,8 @@ describe "common message types" do
     msg.class.must_equal Ircbgb::Messages::CtcpResponse
     msg.target.must_equal '#a,b,&c'
     msg.targets.must_equal ['#a', 'b', '&c']
-    msg.text.must_equal 'PING 12345 6789'
-    msg.response.must_equal 'PING'
+    msg.response.must_equal 'PING 12345 6789'
+    msg.ctcp_command.must_equal 'PING'
   end
 
   it "creates join objects" do

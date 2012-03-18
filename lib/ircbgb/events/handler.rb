@@ -101,7 +101,7 @@ module Ircbgb::Events
     def _trigger group, msg
       # A bit hackey
       return if msg.nil?
-      @callbacks[group].call msg.command.upcase, msg, @client
+      @callbacks[group].call msg.event_name, msg, @client
       @callbacks[group].call :all, msg, @client
     end
 

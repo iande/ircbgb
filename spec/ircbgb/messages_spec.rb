@@ -1,34 +1,13 @@
 require File.expand_path('../../spec_helper', __FILE__)
 
 describe Ircbgb::Messages do
-
-  def def_msg msg, par=nil, &block
-    m_name = msg.to_s.split('_').map { |s| s.capitalize }.join('')
-    p_name = par && par.to_s.split('_').map { |s| s.capitalize }.join('')
-    @defined_messages << [m_name, p_name]
-    @mod.define msg, par, &block
-  end
-
+  include MessageDefs
   before do
     @mod = Ircbgb::Messages
-    @defined_messages = []
   end
 
   after do
-    # Clean out messages defined in tests
-    @defined_messages.each do |m_name, p_name|
-      if @mod.const_defined?(m_name)
-        msg = @mod.const_get m_name
-        rm_klass = nil
-        if p_name
-          rm_klass = @mod.const_defined?(p_name) && @mod.const_get(p_name)
-        else
-          rm_klass = Ircbgb::Message
-        end
-        rm_klass.messages.delete_if { |sub| sub == msg } if rm_klass
-        @mod.__send__(:remove_const, m_name)
-      end
-    end
+    reset_messages
   end
 
   describe "defining messages" do

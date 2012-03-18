@@ -100,6 +100,7 @@ describe Ircbgb::Events::Handler do
     end
 
     after do
+      events.stop
     end
 
     it "binds a callback with a string" do
@@ -182,6 +183,31 @@ describe Ircbgb::Events::Handler do
       msgs2.must_equal [ 'CMD', 'CMD', 'CMD' ]
       msgs3.must_equal []
     end
+
+    # This is what we ultimately want
+    # describe "named message events" do
+    #   include MessageDefs
+
+    #   after do
+    #     reset_messages
+    #   end
+
+    #   it "triggers by the name of the message" do
+    #     triggered = [0, 0]
+    #     def_msg :test1 do
+    #       match { |c,p,s| c == 'W00' }
+    #     end
+    #     def_msg :test2, :test1 do
+    #       match { |c,p,s| p[0] ==  'V' }
+    #     end
+    #     events.received(:test1) { triggered[0] += 1 }
+    #     events.received(:test2) { triggered[1] += 1 }
+    #     events.trigger_received irc_msg('W00', ['A'])
+    #     events.trigger_received irc_msg('W00', ['V'])
+    #     events.stop
+    #     triggered.must_equal [1, 1]
+    #   end
+    # end
 
     describe "helpers" do
       it "provides a sending method for binding to the :sending group" do

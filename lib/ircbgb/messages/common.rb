@@ -17,9 +17,8 @@ module Ircbgb::Messages
       # they don't have much support in common IRC clients
       params[1] =~ /\A\001.*\001\Z/
     }
-    # Redefine text
-    text { super()[1..-2] }
-    request { text.split(' ').first }
+    request { text[1..-2] }
+    ctcp_command { request.split(' ').first }
   end
 
   define :ctcp_response, :notice do
@@ -27,8 +26,8 @@ module Ircbgb::Messages
       params[1] =~ /\A\001.*\001\Z/
     }
     # Redefine text
-    text { super()[1..-2] }
-    response { text.split(' ').first }
+    response { text[1..-2] }
+    ctcp_command { response.split(' ').first }
   end
 
   define :join do

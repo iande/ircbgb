@@ -108,6 +108,8 @@ module Ircbgb
       !!(@command =~ /\A\d+\Z/)
     end
 
+    def event_name; @command; end
+
     def to_s
       source_prefix + @command + params_string
     end
